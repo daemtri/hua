@@ -2,6 +2,7 @@ package main
 
 import (
 	"context"
+	"errors"
 	"log"
 	"net/http"
 
@@ -10,10 +11,9 @@ import (
 )
 
 func main() {
-
 	err := http.ListenAndServe(":80", huarpc.BuildServer(&api.CalcService{
 		Add: func(ctx context.Context, arg *api.AddArg) (*api.AddReply, error) {
-			return &api.AddReply{Result: arg.Left + arg.Right}, nil
+			return &api.AddReply{Result: arg.Left + arg.Right}, errors.New("xxx")
 		},
 	}))
 	if err != nil {

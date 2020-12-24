@@ -1,6 +1,7 @@
 package huarpc
 
 import (
+	"context"
 	"net/http"
 )
 
@@ -10,3 +11,9 @@ type Router interface {
 	// the `method` HTTP method.
 	HandleFunc(method, pattern string, handler http.Handler)
 }
+
+func Register(x interface{}) {
+
+}
+
+type Context = context.Context

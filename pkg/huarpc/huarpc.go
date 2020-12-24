@@ -9,8 +9,6 @@ import (
 	"strconv"
 	"strings"
 
-	"github.com/davecgh/go-spew/spew"
-
 	"github.com/go-chi/chi"
 )
 
@@ -53,18 +51,14 @@ func BuildServer(s interface{}) http.Handler {
 		if !strings.HasSuffix(indirect(sft.Out(0)).Name(), "Reply") {
 			panic(fmt.Errorf("%s must end with 'Reply'", indirect(sft.Out(0)).Name()))
 		}
-		var m, p string
-		httpTags := strings.SplitN(sf.Tag.Get("http"), " ", 2)
-		spew.Dump(httpTags)
-		switch len(httpTags) {
-		case 0:
-			m, p = http.MethodPost, fmt.Sprintf("/%s/%s", t.Name(), sf.Name)
-		case 1:
-			m, p = httpTags[0], fmt.Sprintf("/%s/%s", t.Name(), sf.Name)
-		case 2:
-			m, p = httpTags[0], httpTags[1]
-		default:
-			panic("http tag error")
+
+		m, p := http.MethodPost, fmt.Sprintf("/%s/%s", t.Name(), sf.Name)
+		if httpTag, ok := sf.Tag.Lookup("http"); ok {
+			httpTags := strings.SplitN(httpTag, " ", 2)
+			m = httpTags[0]
+			if len(httpTags) == 2 {
+				p = httpTags[1]
+			}
 		}
 
 		mux.Method(m, p, &method{
