@@ -1,0 +1,5 @@
+package huagen
+
+func Generate() {
+
+}
