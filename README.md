@@ -22,8 +22,8 @@ import (
 	"github.com/duanqy/hua/pkg/hua"
 )
 
-service := &example.UserService{}
-service.GetUser = func(arg *api.GetUserArg) (*api.GetUserReply,error) {
+service := &example.CalcService{}
+service.GetUser = func(arg *api.AddArg) (*api.AddReply,error) {
 	panic("not implemented")
 }
 http.ListenAndServe("127.0.0.1", hua.BuildServer(service))
@@ -70,38 +70,5 @@ import (
 
 client := &api.UserService{}
 huamock.Stub(&client)
-reply,err := client.GetUser(&api.GetUserArg{Account:"sam"})
-```
-
-### Go2 API
-
-#### Server
-
-```go
-package main
-
-import (
-	"github.com/duanqy/hua/v2/example/api"
-	"github.com/duanqy/hua/v2/pkg/hua"
-)
-
-service := hua.NewService[example.UserService]()
-service.GetUser = func(arg *api.GetUserArg) (*api.GetUserReply,error) {
-	panic("not implemented")
-}
-http.ListenAndServe("xxx", service)
-```
-
-
-#### Client
-```go
-package main
-
-import (
-	"github.com/duanqy/hua/v2/example/api"
-	"github.com/duanqy/hua/v2/pkg/hua"
-)
-
-client := hua.Dial[example.UserService]("http://")
 reply,err := client.GetUser(&api.GetUserArg{Account:"sam"})
 ```

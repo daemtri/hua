@@ -6,7 +6,6 @@ import (
 	"go/token"
 	"net/http"
 	"reflect"
-	"strconv"
 	"strings"
 
 	"github.com/go-chi/chi"
@@ -54,7 +53,7 @@ func BuildServer(s interface{}) http.Handler {
 
 		m, p := http.MethodPost, fmt.Sprintf("/%s/%s", t.Name(), sf.Name)
 		if httpTag, ok := sf.Tag.Lookup("http"); ok {
-			httpTags := strings.SplitN(httpTag, " ", 2)
+			httpTags := strings.SplitN(httpTag, ",", 2)
 			m = httpTags[0]
 			if len(httpTags) == 2 {
 				p = httpTags[1]
@@ -85,116 +84,7 @@ func (m *method) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 			panic(fmt.Errorf("json decode error: %w", err))
 		}
 	} else {
-		argType := m.argType.Elem()
-		for i := 0; i < argType.NumField(); i++ {
-			var val string
-			valType := argType.Field(i)
-			formTag, ok := valType.Tag.Lookup("form")
-			if ok {
-				val = r.FormValue(formTag)
-			} else {
-				val = r.FormValue(argType.Field(i).Name)
-			}
-
-			switch valType.Type.Kind() {
-			case reflect.Int8:
-				fieldValue, err := strconv.ParseInt(val, 10, 8)
-				if err != nil {
-					http.Error(w, "解析参数出错"+err.Error(), http.StatusInternalServerError)
-					return
-				}
-				arg.Elem().Field(i).SetInt(fieldValue)
-			case reflect.Int16:
-				fieldValue, err := strconv.ParseInt(val, 10, 16)
-				if err != nil {
-					http.Error(w, "解析参数出错"+err.Error(), http.StatusInternalServerError)
-					return
-				}
-				arg.Elem().Field(i).SetInt(fieldValue)
-			case reflect.Int32:
-				fieldValue, err := strconv.ParseInt(val, 10, 32)
-				if err != nil {
-					http.Error(w, "解析参数出错"+err.Error(), http.StatusInternalServerError)
-					return
-				}
-				arg.Elem().Field(i).SetInt(fieldValue)
-			case reflect.Int:
-				fieldValue, err := strconv.ParseInt(val, 10, strconv.IntSize)
-				if err != nil {
-					http.Error(w, "解析参数出错"+err.Error(), http.StatusInternalServerError)
-					return
-				}
-				arg.Elem().Field(i).SetInt(fieldValue)
-			case reflect.Int64:
-				fieldValue, err := strconv.ParseInt(val, 10, 64)
-				if err != nil {
-					http.Error(w, "解析参数出错"+err.Error(), http.StatusInternalServerError)
-					return
-				}
-				arg.Elem().Field(i).SetInt(fieldValue)
-			case reflect.Uint8:
-				fieldValue, err := strconv.ParseUint(val, 10, 6)
-				if err != nil {
-					http.Error(w, "解析参数出错"+err.Error(), http.StatusInternalServerError)
-					return
-				}
-				arg.Elem().Field(i).SetUint(fieldValue)
-			case reflect.Uint16:
-				fieldValue, err := strconv.ParseUint(val, 10, 16)
-				if err != nil {
-					http.Error(w, "解析参数出错"+err.Error(), http.StatusInternalServerError)
-					return
-				}
-				arg.Elem().Field(i).SetUint(fieldValue)
-			case reflect.Uint32:
-				fieldValue, err := strconv.ParseUint(val, 10, 32)
-				if err != nil {
-					http.Error(w, "解析参数出错"+err.Error(), http.StatusInternalServerError)
-					return
-				}
-				arg.Elem().Field(i).SetUint(fieldValue)
-			case reflect.Uint:
-				fieldValue, err := strconv.ParseUint(val, 10, strconv.IntSize)
-				if err != nil {
-					http.Error(w, "解析参数出错"+err.Error(), http.StatusInternalServerError)
-					return
-				}
-				arg.Elem().Field(i).SetUint(fieldValue)
-			case reflect.Uint64:
-				fieldValue, err := strconv.ParseUint(val, 10, 64)
-				if err != nil {
-					http.Error(w, "解析参数出错"+err.Error(), http.StatusInternalServerError)
-					return
-				}
-				arg.Elem().Field(i).SetUint(fieldValue)
-			case reflect.Float32:
-				fieldValue, err := strconv.ParseFloat(val, 32)
-				if err != nil {
-					http.Error(w, "解析参数出错"+err.Error(), http.StatusInternalServerError)
-					return
-				}
-				arg.Elem().Field(i).SetFloat(fieldValue)
-			case reflect.Float64:
-				fieldValue, err := strconv.ParseFloat(val, 64)
-				if err != nil {
-					http.Error(w, "解析参数出错"+err.Error(), http.StatusInternalServerError)
-					return
-				}
-				arg.Elem().Field(i).SetFloat(fieldValue)
-			case reflect.String:
-				arg.Elem().Field(i).SetString(val)
-			case reflect.Bool:
-				fieldValue, err := strconv.ParseBool(val)
-				if err != nil {
-					http.Error(w, "解析参数出错"+err.Error(), http.StatusInternalServerError)
-					return
-				}
-				arg.Elem().Field(i).SetBool(fieldValue)
-			default:
-				http.Error(w, "不支持的字段类型", http.StatusInternalServerError)
-			}
-
-		}
+		panic(fmt.Errorf("content-type error:accept only application/json now, recived: %s", contentType))
 	}
 
 	reply := m.callable.Call([]reflect.Value{reflect.ValueOf(r.Context()), arg})
