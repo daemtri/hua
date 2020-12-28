@@ -11,8 +11,7 @@ import (
 )
 
 func main() {
-	huarpc.Extend(api.Protocol)
-	err := http.ListenAndServe(":80", huarpc.BuildServer(&api.CalcService{
+	err := http.ListenAndServe(":80", huarpc.NewServer().Register(&api.CalcService{
 		Add: func(ctx context.Context, arg *api.AddArg) (*api.AddReply, error) {
 			return &api.AddReply{Result: arg.Left + arg.Right}, errors.New("xxx")
 		},

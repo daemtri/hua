@@ -1,37 +1,25 @@
 package huarpc
 
 import (
-	"net/http"
-	"reflect"
+	"net/url"
+
+	"github.com/go-playground/form/v4"
 )
 
-func isInvalidKind(kind reflect.Kind) bool {
-	return kind == reflect.Int8 ||
-		kind == reflect.Int16 ||
-		kind == reflect.Int32 ||
-		kind == reflect.Int64 ||
-		kind == reflect.Int ||
-		kind == reflect.Uint8 ||
-		kind == reflect.Uint16 ||
-		kind == reflect.Uint32 ||
-		kind == reflect.Uint64 ||
-		kind == reflect.Uint ||
-		kind == reflect.Float32 ||
-		kind == reflect.Float64 ||
-		kind == reflect.Bool ||
-		kind == reflect.String
+type FormDecoder interface {
+	Decode(v interface{}, values url.Values) (err error)
 }
 
-type argField struct {
-	form string
-	kind reflect.Kind
+type FormEncoder interface {
+	Encode(v interface{}) (values url.Values, err error)
 }
 
-type argFields struct {
-	fields []argField
-	typ    reflect.Type
+func newFormDecoder() FormDecoder {
+	dec := form.NewDecoder()
+	return dec
 }
 
-func formDecode(fields *argFields, r *http.Request) (*reflect.Value, error) {
-	return nil, nil
+func newFromEncoder() FormEncoder {
+	enc := form.NewEncoder()
+	return enc
 }

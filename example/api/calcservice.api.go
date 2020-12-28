@@ -5,7 +5,6 @@ import (
 )
 
 // CalcService xxxxxx
-// 哈哈哈
 type CalcService struct {
 	// Add 函数xxx
 	Add func(context.Context, *AddArg) (*AddReply, error) `http:"GET,/calc/add" help:"加法"`
@@ -15,8 +14,8 @@ type CalcService struct {
 
 // AddArg xxx
 type AddArg struct {
-	Left  int `json:"left" help:"左值"`
-	Right int `json:"right" help:"右值"`
+	Left  int `json:"left" valid:"int" help:"左值"`
+	Right int `json:"right" valid:"int" help:"右值"`
 }
 
 // AddReply xxx

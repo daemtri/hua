@@ -11,10 +11,6 @@ import (
 	"github.com/go-chi/chi"
 )
 
-var (
-	errType = reflect.TypeOf(struct{ error }{}).Field(0).Type
-)
-
 func indirect(v reflect.Type) reflect.Type {
 	if v.Kind() != reflect.Ptr {
 		return v
@@ -22,7 +18,7 @@ func indirect(v reflect.Type) reflect.Type {
 	return v.Elem()
 }
 
-func BuildServer(s interface{}) http.Handler {
+func BuildServer(s interface{}) Server {
 	v := reflect.Indirect(reflect.ValueOf(s))
 	t := v.Type()
 	if !strings.HasSuffix(t.Name(), "Service") {
@@ -67,7 +63,7 @@ func BuildServer(s interface{}) http.Handler {
 		})
 	}
 
-	return mux
+	return Server{mux: mux}
 }
 
 type method struct {
