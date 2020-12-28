@@ -2,6 +2,7 @@ package main
 
 import (
 	"context"
+	"fmt"
 	"github.com/duanqy/hua/pkg/huamock"
 	"log"
 	"net/http"
@@ -20,7 +21,13 @@ func main() {
 	if err := huamock.Stub(s); err != nil {
 		panic(err)
 	}
-	err := http.ListenAndServe(":80", huarpc.NewServer().Register(s))
+	// 作为客户端调用stub方法
+	ret, err := s.Mul(context.Background(), &api.MulArg{
+		Left:  1,
+		Right: 2,
+	})
+	fmt.Println(ret)
+	err = http.ListenAndServe(":80", huarpc.NewServer().Register(s))
 	if err != nil {
 		log.Fatalln(err)
 	}

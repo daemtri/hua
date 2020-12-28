@@ -11,7 +11,7 @@ type CalcService struct {
 	// Div xxx
 	Div func(context.Context, *DivArg) (*DivReply, error) `http:"GET,/calc/div/{left}/{right}" help:"除法"`
 	// Div xxx
-	Mul func(context.Context, *DivArg) (*DivReply, error) `http:"GET,/calc/mul" help:"除法"`
+	Mul func(context.Context, *MulArg) (*MulReply, error) `http:"GET,/calc/mul" help:"除法"`
 }
 
 type MulArg struct {

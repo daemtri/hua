@@ -1,4 +1,4 @@
-# hua
+# 🌺 hua 
 hua - a code as protocol web api framework
 
 ## 特性
@@ -22,7 +22,7 @@ import (
 	"github.com/duanqy/hua/pkg/hua"
 )
 
-service := &example.CalcService{}
+service := &api.CalcService{}
 service.Add = func(arg *api.AddArg) (*api.AddReply,error) {
 	panic("not implemented")
 }
@@ -41,7 +41,7 @@ import (
 
 client := &api.CalcService{}
 hua.BuildClient(&client)
-reply,err := client.GetUser(&api.AddArg{Left:1,Right:2})
+reply,err := client.Add(context.Background(),&api.AddArg{Left:1,Right:2})
 ```
 
 ### Mock
@@ -55,9 +55,9 @@ import (
 	"github.com/duanqy/hua/pkg/hua"
 )
 
-service := &example.CalcService{}
+service := &api.CalcService{}
 huamock.Stub(service)
-http.ListenAndServe("127.0.0.1", hua.BuildServer(service))
+http.ListenAndServe("127.0.0.1",hua.NewServer().Register(service))
 ```
 #### Mock Client
 ```go
@@ -68,7 +68,7 @@ import (
 	"github.com/duanqy/hua/pkg/hua"
 )
 
-client := &api.UserService{}
+client := &api.CalcService{}
 huamock.Stub(&client)
-reply,err := client.Add(&api.AddArg{Left:1,Right:2})
+reply,err := client.Add(context.Background(),&api.AddArg{Left:1,Right:2})
 ```
