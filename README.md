@@ -1,5 +1,5 @@
 # hua
-hua - a scheme as code web api framework
+hua - a code as protocol web api framework
 
 ## 特性
 * 协议即代码(go)
@@ -10,7 +10,7 @@ hua - a scheme as code web api framework
 * 生成文档工具
 * 基于websocket支持订阅模式接口
 
-### Go1 API
+### Go Example
 
 #### Server
 
@@ -23,10 +23,10 @@ import (
 )
 
 service := &example.CalcService{}
-service.GetUser = func(arg *api.AddArg) (*api.AddReply,error) {
+service.Add = func(arg *api.AddArg) (*api.AddReply,error) {
 	panic("not implemented")
 }
-http.ListenAndServe("127.0.0.1", hua.BuildServer(service))
+http.ListenAndServe("127.0.0.1", hua.NewServer().Register(service))
 ```
 
 
@@ -35,13 +35,13 @@ http.ListenAndServe("127.0.0.1", hua.BuildServer(service))
 package main
 
 import (
-	"github.com/duanqy/hua/v2/example/api"
-	"github.com/duanqy/hua/v2/pkg/hua"
+	"github.com/duanqy/hua/example/api"
+	"github.com/duanqy/hua/pkg/hua"
 )
 
-client := &api.UserService{}
+client := &api.CalcService{}
 hua.BuildClient(&client)
-reply,err := client.GetUser(&api.GetUserArg{Account:"sam"})
+reply,err := client.GetUser(&api.AddArg{Left:1,Right:2})
 ```
 
 ### Mock
@@ -55,7 +55,7 @@ import (
 	"github.com/duanqy/hua/pkg/hua"
 )
 
-service := &example.UserService{}
+service := &example.CalcService{}
 huamock.Stub(service)
 http.ListenAndServe("127.0.0.1", hua.BuildServer(service))
 ```
@@ -64,11 +64,11 @@ http.ListenAndServe("127.0.0.1", hua.BuildServer(service))
 package main
 
 import (
-	"github.com/duanqy/hua/v2/example/api"
-	"github.com/duanqy/hua/v2/pkg/hua"
+	"github.com/duanqy/hua/example/api"
+	"github.com/duanqy/hua/pkg/hua"
 )
 
 client := &api.UserService{}
 huamock.Stub(&client)
-reply,err := client.GetUser(&api.GetUserArg{Account:"sam"})
+reply,err := client.Add(&api.AddArg{Left:1,Right:2})
 ```

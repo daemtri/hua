@@ -10,12 +10,23 @@ type CalcService struct {
 	Add func(context.Context, *AddArg) (*AddReply, error) `http:"GET,/calc/add" help:"加法"`
 	// Div xxx
 	Div func(context.Context, *DivArg) (*DivReply, error) `http:"GET,/calc/div/{left}/{right}" help:"除法"`
+	// Div xxx
+	Mul func(context.Context, *DivArg) (*DivReply, error) `http:"GET,/calc/mul" help:"除法"`
+}
+
+type MulArg struct {
+	Left  float64 `json:"left" form:"left" valid:"int" help:"左值"`
+	Right float64 `json:"right" form:"right" valid:"int" help:"右值"`
+}
+
+type MulReply struct {
+	Result float64 `json:"result"`
 }
 
 // AddArg xxx
 type AddArg struct {
-	Left  int `json:"left" valid:"int" help:"左值"`
-	Right int `json:"right" valid:"int" help:"右值"`
+	Left  int `json:"left" form:"left" valid:"int" help:"左值"`
+	Right int `json:"right" form:"right" valid:"int" help:"右值"`
 }
 
 // AddReply xxx
