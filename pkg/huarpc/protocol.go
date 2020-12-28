@@ -35,18 +35,18 @@ type serviceMethod struct {
 
 func parseServiceMethod(field reflect.StructField, value reflect.Value) (*serviceMethod, error) {
 	if !token.IsExported(field.Name) {
-		panic("service的所有属性必须是可导出的")
+		return nil,errors.New("service的所有属性必须是可导出的")
 	}
 	sft := field.Type
 	if sft.NumIn() != 2 || sft.NumOut() != 2 || sft.In(0) != contextType || sft.Out(1) != errType {
-		return nil, fmt.Errorf("函数%s签名错误（正确: func(context.Context,T)(K,error),T为入参，K为出参)", field.Name)
+		return nil, fmt.Errorf("函数%s签名错误（正确: func(context.Context,*xxArg)(*xxReply,error),xxArg为入参，xxReply为出参)", field.Name)
 	}
 
-	if !strings.HasSuffix(indirect(sft.In(1)).Name(), "Arg") {
-		panic(fmt.Errorf("%s must end with 'Arg'", indirect(sft.In(1)).Name()))
+	if !strings.HasSuffix(sft.In(1).Elem().Name(), "Arg") {
+		return nil,fmt.Errorf("%s must end with 'Arg'", sft.In(1).Elem().Name())
 	}
-	if !strings.HasSuffix(indirect(sft.Out(0)).Name(), "Reply") {
-		panic(fmt.Errorf("%s must end with 'Reply'", indirect(sft.Out(0)).Name()))
+	if !strings.HasSuffix(sft.Out(0).Elem().Name(), "Reply") {
+		return nil,fmt.Errorf("%s must end with 'Reply'", sft.Out(0).Elem().Name())
 	}
 
 	sm := &serviceMethod{
@@ -114,7 +114,7 @@ func (s service) route(mux Router) {
 		if s.version != "" {
 			pattern = fmt.Sprintf("/%s/%s/%s", strings.ToLower(s.name), strings.ToLower(s.version), strings.ToLower(m.name))
 		} else {
-			pattern = fmt.Sprintf("%s/%s", strings.ToLower(s.name), strings.ToLower(m.name))
+			pattern = fmt.Sprintf("/%s/%s", strings.ToLower(s.name), strings.ToLower(m.name))
 		}
 		if m.httpTags.method == "" {
 			mux.Handle(pattern, m)

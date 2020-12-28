@@ -79,7 +79,7 @@ func NewServer(opts ...Option) *Server {
 	for i := range o.httpMiddlewares {
 		s.mux.Use(o.httpMiddlewares[i])
 	}
-	return nil
+	return s
 }
 
 func (s *Server) ServeHTTP(writer http.ResponseWriter, request *http.Request) {
@@ -91,6 +91,7 @@ func (s *Server) Register(service interface{}) *Server {
 	if err != nil {
 		panic(err)
 	}
+
 	srv.route(s.mux)
-	return nil
+	return s
 }
