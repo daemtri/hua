@@ -3,8 +3,6 @@ package huarpc
 import (
 	"io/fs"
 	"net/http"
-
-	"github.com/go-chi/chi"
 )
 
 type Validator interface {
@@ -29,7 +27,7 @@ func WithServerHost(host string) Option {
 	})
 }
 
-func WithHttpMiddleware(f func(http.Handler) http.Handler) Option {
+func WithMiddleware(f func(http.Handler) http.Handler) Option {
 	return optionFunc(func(o *options) {
 		o.httpMiddlewares = append(o.httpMiddlewares, f)
 	})
@@ -45,10 +43,9 @@ type options struct {
 
 func newOptions() *options {
 	return &options{
-		validator:       nil,
-		protocol:        nil,
-		serverHost:      "http://127.0.0.1",
-		httpMiddlewares: nil,
+		validator:  nil,
+		protocol:   nil,
+		serverHost: "http://127.0.0.1",
 	}
 }
 
@@ -64,12 +61,12 @@ func (f optionFunc) apply(o *options) {
 
 type Server struct {
 	host string
-	mux  Router
+	mux  ServeMux
 }
 
 func NewServer(opts ...Option) *Server {
 	s := &Server{
-		mux: chi.NewRouter(),
+		mux: NewServeMux(),
 	}
 	o := newOptions()
 	for i := range opts {
@@ -86,12 +83,12 @@ func (s *Server) ServeHTTP(writer http.ResponseWriter, request *http.Request) {
 	s.mux.ServeHTTP(writer, request)
 }
 
-func (s *Server) Register(service interface{}) *Server {
-	srv, err := parseService(service)
-	if err != nil {
-		panic(err)
-	}
+func (s *Server) Run(addr string) error {
+	return http.ListenAndServe(addr, s)
+}
 
-	srv.route(s.mux)
+func (s *Server) Register(service interface{}) *Server {
+	srv := MustNewService(service)
+	srv.Route(s.mux)
 	return s
 }

@@ -1,7 +1,11 @@
 package main
 
-import "fmt"
+import (
+	"strings"
+
+	"github.com/davecgh/go-spew/spew"
+)
 
 func main() {
-	fmt.Println("hello world")
+	spew.Dump(strings.SplitN("xx,xx", ",", 3))
 }

@@ -7,11 +7,11 @@ import (
 // CalcService xxxxxx
 type CalcService struct {
 	// Add 函数xxx
-	Add func(context.Context, *AddArg) (*AddReply, error) `http:"GET,/calc/add" help:"加法"`
+	Add func(context.Context, *AddArg) (*AddReply, error) `http:"GET /calc/add" help:"加法"`
 	// Div xxx
-	Div func(context.Context, *DivArg) (*DivReply, error) `http:"GET,/calc/div/{left}/{right}" help:"除法"`
+	Div func(context.Context, *DivArg) (*DivReply, error) `http:"GET /calc/div/{left}/{right}" help:"除法"`
 	// Div xxx
-	Mul func(context.Context, *MulArg) (*MulReply, error) `http:"GET,/calc/mul" help:"除法"`
+	Mul func(context.Context, *MulArg) (*MulReply, error) `http:"GET /calc/mul" help:"除法"`
 }
 
 type MulArg struct {
