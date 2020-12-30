@@ -3,9 +3,10 @@ package main
 import (
 	"context"
 	"fmt"
-	"github.com/duanqy/hua/pkg/huamock"
 	"log"
 	"net/http"
+
+	"github.com/duanqy/hua/pkg/huamock"
 
 	"github.com/duanqy/hua/example/api"
 	"github.com/duanqy/hua/pkg/huarpc"
@@ -31,4 +32,5 @@ func main() {
 	if err != nil {
 		log.Fatalln(err)
 	}
+
 }

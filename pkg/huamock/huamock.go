@@ -1,21 +1,16 @@
 package huamock
 
 import (
-	"errors"
-	"github.com/bxcodec/faker/v3"
 	"reflect"
+
+	"github.com/bxcodec/faker/v3"
 )
 
 // Stub 伪造未实现的方法用于测试
-func Stub(s interface{}) error {
-	v := reflect.ValueOf(s)
+func Stub(s interface{}) interface{} {
+	v := reflect.Indirect(reflect.ValueOf(s))
 	t := v.Type()
-	if t.Kind() != reflect.Ptr {
-		return errors.New("service type must be a ptr")
-	}
 
-	t = t.Elem()
-	v = v.Elem()
 	for i := 0; i < t.NumField(); i++ {
 		if !v.Field(i).IsNil() {
 			continue
@@ -28,7 +23,7 @@ func Stub(s interface{}) error {
 		v.Field(i).Set(fn)
 	}
 
-	return nil
+	return s
 }
 
 type fakerHandler struct {

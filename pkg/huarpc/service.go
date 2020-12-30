@@ -8,7 +8,6 @@ import (
 	"go/token"
 	"net/http"
 	"reflect"
-	"regexp"
 	"strings"
 )
 
@@ -26,12 +25,12 @@ type MethodTags struct {
 }
 
 type ServiceMethod struct {
-	Name    string
-	ArgType reflect.Type
+	Belong *Service
 
-	Tags MethodTags
-
-	Handler reflect.Value
+	Name     string
+	ArgType  reflect.Type
+	Callable reflect.Value
+	Tags     MethodTags
 
 	FormDecoder FormDecoder
 	FormEncoder FormEncoder
@@ -56,7 +55,7 @@ func parseServiceMethod(field reflect.StructField, value reflect.Value) (*Servic
 	sm := &ServiceMethod{
 		Name:        field.Name,
 		ArgType:     sft.In(1),
-		Handler:     value,
+		Callable:    value,
 		FormDecoder: newFormDecoder(),
 		FormEncoder: newFromEncoder(),
 		Tags: MethodTags{
@@ -91,7 +90,21 @@ func (s *ServiceMethod) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		}
 	}
 
-	reply := s.Handler.Call([]reflect.Value{reflect.ValueOf(r.Context()), arg})
+	// TODO: 优化性能
+	n := arg.Type().Elem()
+	ve := arg.Elem()
+	for i := 0; i < n.NumField(); i++ {
+		key := n.Field(i).Name
+		if tag := n.Field(i).Tag.Get("path"); tag != "" {
+			key = tag
+		}
+		val := s.Belong.router.URLParams(r, key)
+		if val != "" {
+			ve.Field(i).Set(reflect.ValueOf(val).Convert(ve.Field(i).Type()))
+		}
+	}
+
+	reply := s.Callable.Call([]reflect.Value{reflect.ValueOf(r.Context()), arg})
 	err, _ := reply[1].Interface().(error)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
@@ -104,64 +117,74 @@ func (s *ServiceMethod) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 }
 
 type Service struct {
-	Name       string
-	NamePrefix string
-	Version    string
-	Methods    []*ServiceMethod
+	Name    string
+	Methods []*ServiceMethod
+
+	options *options
+	router  Router
 }
 
-func (s Service) Route(r Router) {
-	var restPattern, rpcPattern string
+// route 注册路由
+func (s *Service) route(r Router) {
+	mux := r
+	if s.options != nil && len(s.options.httpMiddlewares) > 0 {
+		mux = r.With(s.options.httpMiddlewares...)
+	}
+	s.router = mux
+
+	var restPattern string
 	for i := range s.Methods {
 		m := s.Methods[i]
-		rpcPattern = fmt.Sprintf("%s%s.%s", s.Name, s.Version, m.Name)
-		if s.Version != "" {
-			restPattern = fmt.Sprintf("/%s/%s/%s", strings.ToLower(s.Name), strings.ToLower(s.Version), strings.ToLower(m.Name))
-		} else {
-			restPattern = fmt.Sprintf("/%s/%s", strings.ToLower(s.Name), strings.ToLower(m.Name))
+		methodName := m.Tags.HTTP.Path
+		if methodName == "" {
+			methodName = "/" + strings.ToLower(m.Name)
 		}
+
+		restPattern = "/" + strings.ToLower(s.Name) + methodName
 		if m.Tags.HTTP.Method == "" {
-			r.Handle(restPattern, m)
-			r.Handle(rpcPattern, m)
+			mux.Handle(restPattern, m)
 		} else {
-			r.Method(m.Tags.HTTP.Method, restPattern, m)
-			r.Method(m.Tags.HTTP.Method, rpcPattern, m)
+			mux.Method(m.Tags.HTTP.Method, restPattern, m)
 		}
 	}
 }
 
-var serviceNamePattern = regexp.MustCompile(`^(?:([a-zA-Z0-9]*)(V[0-9]+)|([a-zA-Z0-9]*))Service$`)
-
-func MustNewService(s interface{}) *Service {
-	service, err := NewService(s)
-	if err != nil {
-		panic(fmt.Errorf("new service error: %w", err))
+func (s *Service) With(opts ...Option) *Service {
+	if s.options == nil {
+		s.options = newOptions()
 	}
-	return service
+	for i := range opts {
+		opts[i].apply(s.options)
+	}
+	return s
 }
 
-func NewService(s interface{}) (*Service, error) {
+func (s *Service) Endpoint() (pattern string, handler http.Handler) {
+	mux := NewServeMux()
+	s.route(mux)
+	return fmt.Sprintf("/%s/", strings.ToLower(s.Name)), mux
+}
+
+// NewService 创建服务
+func NewService(s interface{}) *Service {
 	v := reflect.Indirect(reflect.ValueOf(s))
 	t := v.Type()
-	ret := serviceNamePattern.FindStringSubmatch(t.Name())
-	if ret == nil {
-		return nil, errors.New("service name必须包含Service后缀")
+
+	if !strings.HasSuffix(t.Name(), "Service") {
+		panic(errors.New("service name必须包含Service后缀"))
 	}
 
 	srv := &Service{}
-	if ret[3] == "" {
-		srv.Name, srv.Version = ret[1], ret[2]
-	} else {
-		srv.Name = ret[3]
-	}
+	srv.Name = strings.TrimSuffix(t.Name(), "Service")
 
 	for i := 0; i < t.NumField(); i++ {
 		sm, err := parseServiceMethod(t.Field(i), v.Field(i))
 		if err != nil {
-			return nil, fmt.Errorf("解析方法出错: %w", err)
+			panic(fmt.Errorf("解析方法出错: %w", err))
 		}
+		sm.Belong = srv
 		srv.Methods = append(srv.Methods, sm)
 	}
 
-	return srv, nil
+	return srv
 }

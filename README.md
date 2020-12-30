@@ -1,14 +1,16 @@
 # 🌺 hua 
-hua - a code as protocol web api framework
+hua - a code as schema web api framework
 
 ## 特性
 * 协议即代码(go)
+* 协议即SDK(go)
+* 协议即文档(go)  
 * 基于反射的rpc服务（go）
 * 生成多语言客户端和服务端代码
 * mock框架
-* https双向认证
-* 生成文档工具
+* 生成调试工具
 * 基于websocket支持订阅模式接口
+* 自动api文档
 
 ### Go Example
 

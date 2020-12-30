@@ -1,11 +1,19 @@
 package main
 
 import (
-	"strings"
+	"net/http"
 
-	"github.com/davecgh/go-spew/spew"
+	"github.com/go-chi/chi"
+
+	"github.com/duanqy/hua/example/api"
+	"github.com/duanqy/hua/pkg/huamock"
+	"github.com/duanqy/hua/pkg/huarpc"
 )
 
 func main() {
-	spew.Dump(strings.SplitN("xx,xx", ",", 3))
+	r := chi.NewRouter()
+	_, b := huarpc.NewService(huamock.Stub(&api.CalcService{})).Endpoint()
+	if err := http.ListenAndServe(":80", r); err != nil {
+		panic(err)
+	}
 }
