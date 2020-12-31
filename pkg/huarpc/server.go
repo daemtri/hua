@@ -17,7 +17,7 @@ func NewServer(opts ...Option) *Server {
 	for i := range opts {
 		opts[i].apply(o)
 	}
-	s.host = o.serverHost
+
 	for i := range o.httpMiddlewares {
 		s.Router.Use(o.httpMiddlewares[i])
 	}

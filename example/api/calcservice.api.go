@@ -6,12 +6,22 @@ import (
 
 // CalcService 算数计算服务
 type CalcService struct {
-	// Add 函数xxx
-	Add func(context.Context, *AddArg) (*AddReply, error) `http:"GET /add" help:"加法"`
-	// Div xxx
-	Div func(context.Context, *DivArg) (*DivReply, error) `http:"GET /div/{left}/{right}" help:"除法"`
-	// Div xxx
-	Mul func(context.Context, *MulArg) (*MulReply, error) `http:"GET /mul" help:"除法"`
+	Add       func(context.Context, *AddArg) (*AddReply, error)                            `http:"GET /add" help:"加法"`
+	Div       func(context.Context, *DivArg) (*DivReply, error)                            `http:"GET /div/{left}/{right}" help:"除法"`
+	Mul       func(context.Context, *MulArg) (*MulReply, error)                            `http:"GET /mul" help:"除法"`
+	Fibonacci func(ctx context.Context, arg *FibonacciArg) (<-chan *FibonacciReply, error) `http:"GET /fibonacci" help:"斐波那契数列"`
+}
+
+type FibonacciArg struct {
+	First  int `json:"first"`
+	Second int `json:"second"`
+}
+
+type FibonacciReply struct {
+	ID     string `sse:"id"`
+	Event  string `sse:"event"`
+	Retry  string `sse:"retry"`
+	Number int    `json:"number" sse:"data"`
 }
 
 type MulArg struct {

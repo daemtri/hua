@@ -9,7 +9,7 @@ hua - a code as schema web api framework
 * 生成多语言客户端和服务端代码
 * mock框架
 * 生成调试工具
-* 基于websocket支持订阅模式接口
+* 基于Server-Sent Events支持订阅模式接口
 * 自动api文档
 
 ### Go Example

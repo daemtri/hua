@@ -2,6 +2,7 @@ package huamock
 
 import (
 	"reflect"
+	"time"
 
 	"github.com/bxcodec/faker/v3"
 )
@@ -16,10 +17,17 @@ func Stub(s interface{}) interface{} {
 			continue
 		}
 		mt := t.Field(i).Type
-		fn := reflect.MakeFunc(mt, (&fakerHandler{
+		fh := &fakerHandler{
 			replyType: mt.Out(0),
 			errType:   mt.Out(1),
-		}).stub)
+		}
+		var fn reflect.Value
+		if mt.Out(0).Kind() == reflect.Chan {
+			fn = reflect.MakeFunc(mt, fh.stubChan)
+		} else {
+			fn = reflect.MakeFunc(mt, fh.stub)
+		}
+
 		v.Field(i).Set(fn)
 	}
 
@@ -31,9 +39,26 @@ type fakerHandler struct {
 	errType   reflect.Type
 }
 
+func (f *fakerHandler) stubChan(_ []reflect.Value) []reflect.Value {
+	replyChan := reflect.MakeChan(reflect.ChanOf(reflect.BothDir, f.replyType.Elem()), 0)
+	err := reflect.Zero(f.errType)
+
+	go func() {
+		for {
+			reply := reflect.New(f.replyType.Elem().Elem())
+			_ = faker.FakeData(reply.Interface())
+			replyChan.Send(reply)
+			time.Sleep(1 * time.Second)
+		}
+	}()
+
+	return []reflect.Value{replyChan, err}
+}
+
 func (f *fakerHandler) stub(_ []reflect.Value) []reflect.Value {
 	reply := reflect.New(f.replyType.Elem())
 	err := reflect.Zero(f.errType)
+
 	if err2 := faker.FakeData(reply.Interface()); err2 != nil {
 		err = reflect.ValueOf(err)
 	}
