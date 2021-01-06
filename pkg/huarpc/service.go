@@ -8,8 +8,6 @@ import (
 	"net/http"
 	"reflect"
 	"strings"
-
-	uuid "github.com/satori/go.uuid"
 )
 
 var (
@@ -141,8 +139,10 @@ func (s *ServiceMethod) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 			if !ok {
 				break
 			}
-			_, _ = fmt.Fprintf(w, "id: %s\n", uuid.NewV4())
-			_, _ = fmt.Fprintf(w, "event: %s\n", uuid.NewV4())
+
+			_, _ = fmt.Fprintf(w, "id: %s\n", v.Elem().FieldByName("ID").Interface())
+			_, _ = fmt.Fprintf(w, "event: %s\n", v.Elem().Type().Name())
+			_, _ = fmt.Fprintf(w, "retry: %d\n", 100)
 			_, _ = fmt.Fprint(w, "data: ")
 			_ = json.NewEncoder(w).Encode(v.Interface())
 			_, _ = fmt.Fprint(w, "\n")
