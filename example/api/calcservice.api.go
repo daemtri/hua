@@ -6,10 +6,10 @@ import (
 
 // CalcService 算数计算服务
 type CalcService struct {
-	Add       func(context.Context, *AddArg) (*AddReply, error)                    `http:"GET /add" help:"加法"`
-	Div       func(context.Context, *DivArg) (*DivReply, error)                    `http:"GET /div/{left}/{right}" help:"除法"`
-	Mul       func(context.Context, *MulArg) (*MulReply, error)                    `http:"GET /mul" help:"除法"`
-	Fibonacci func(context.Context, *FibonacciArg) (<-chan *FibonacciReply, error) `http:"GET /fibonacci" sse-retry:"100" help:"斐波那契数列"`
+	Add       func(context.Context, AddArg) (*AddReply, error)                    `http:"GET /add" help:"加法"`
+	Div       func(context.Context, DivArg) (*DivReply, error)                    `http:"GET /div/{left}/{right}" help:"除法"`
+	Mul       func(context.Context, MulArg) (*MulReply, error)                    `http:"GET /mul" help:"除法"`
+	Fibonacci func(context.Context, FibonacciArg) (<-chan *FibonacciReply, error) `http:"GET /fibonacci" sse-retry:"100" help:"斐波那契数列"`
 }
 
 // FibonacciArg 请求参数
@@ -20,7 +20,7 @@ type FibonacciArg struct {
 
 // FibonacciReply 返回参数
 type FibonacciReply struct {
-	ID     string `json:"-" sse:"id"`
+	ID     string `sse:"id"`
 	Number int    `json:"number"`
 }
 

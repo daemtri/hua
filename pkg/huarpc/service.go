@@ -43,8 +43,8 @@ func parseServiceMethod(field reflect.StructField, value reflect.Value) (*Servic
 		return nil, fmt.Errorf("函数%s签名错误（正确: func(context.Context,*xxArg)(*xxReply,error),xxArg为入参，xxReply为出参)", field.Name)
 	}
 
-	if !strings.HasSuffix(sft.In(1).Elem().Name(), "Arg") {
-		return nil, fmt.Errorf("%s must end with 'Arg'", sft.In(1).Elem().Name())
+	if sft.In(1).Kind() != reflect.Struct || !strings.HasSuffix(sft.In(1).Name(), "Arg") {
+		return nil, fmt.Errorf("%s must end with 'Arg'", sft.In(1).Name())
 	}
 
 	// TODO: 限制返回必须是结构体或者golang 标准变量类型
@@ -74,7 +74,7 @@ func parseServiceMethod(field reflect.StructField, value reflect.Value) (*Servic
 }
 
 func (s *ServiceMethod) ServeHTTP(w http.ResponseWriter, r *http.Request) {
-	arg := reflect.New(s.ArgType.Elem())
+	arg := reflect.New(s.ArgType)
 	contentType := r.Header.Get("Content-Type")
 	argInterface := arg.Interface()
 
@@ -119,7 +119,7 @@ func (s *ServiceMethod) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		}
 	}
 
-	reply := s.Callable.Call([]reflect.Value{reflect.ValueOf(r.Context()), arg})
+	reply := s.Callable.Call([]reflect.Value{reflect.ValueOf(r.Context()), arg.Elem()})
 	err, _ := reply[1].Interface().(error)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
