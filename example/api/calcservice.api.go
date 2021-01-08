@@ -20,7 +20,7 @@ type FibonacciArg struct {
 
 // FibonacciReply 返回参数
 type FibonacciReply struct {
-	ID     string `sse:"id"`
+	ID     string `json:"-" sse:"id"`
 	Number int    `json:"number"`
 }
 
