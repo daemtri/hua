@@ -4,7 +4,7 @@ import (
 	"context"
 )
 
-// CalcService 算数计算服务
+// CalcService 服务
 type CalcService struct {
 	Add       func(context.Context, AddArg) (*AddReply, error)                    `http:"GET /add" help:"加法"`
 	Div       func(context.Context, DivArg) (*DivReply, error)                    `http:"GET /div/{left}/{right}" help:"除法"`

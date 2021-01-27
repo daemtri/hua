@@ -13,17 +13,16 @@ import (
 )
 
 func main() {
-	s := &api.CalcService{
-		Add: func(ctx context.Context, arg *api.AddArg) (*api.AddReply, error) {
-			return &api.AddReply{Result: arg.Left + arg.Right}, nil
-		},
+	s := &api.CalcService{}
+	s.Add = func(ctx context.Context, arg api.AddArg) (*api.AddReply, error) {
+		return &api.AddReply{Result: arg.Left + arg.Right}, nil
 	}
 
 	if err := huamock.Stub(s); err != nil {
 		panic(err)
 	}
 	// 作为客户端调用stub方法
-	ret, err := s.Mul(context.Background(), &api.MulArg{
+	ret, err := s.Mul(context.Background(), api.MulArg{
 		Left:  1,
 		Right: 2,
 	})

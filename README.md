@@ -31,7 +31,6 @@ service.Add = func(arg *api.AddArg) (*api.AddReply,error) {
 http.ListenAndServe("127.0.0.1", hua.NewServer().Register(service))
 ```
 
-
 #### Client
 ```go
 package main

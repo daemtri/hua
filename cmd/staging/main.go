@@ -1,6 +1,7 @@
 package main
 
 import (
+	"container/list"
 	"net/http"
 
 	"github.com/duanqy/hua/example/api"
@@ -9,7 +10,8 @@ import (
 )
 
 func main() {
-	if err := http.ListenAndServe(":80", huarpc.NewService(huamock.Stub(&api.CalcService{})).Endpoint()); err != nil {
+	if err := http.ListenAndServe(":80", huarpc.NewService(huamock.Stub(api.CalcService{})).Endpoint()); err != nil {
 		panic(err)
 	}
+	list.New()
 }
