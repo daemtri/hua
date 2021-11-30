@@ -165,6 +165,17 @@ type Service struct {
 	mountOnce sync.Once
 }
 
+type Server interface {
+	Specific(s *Specification)
+}
+
+// Specification 接口定义
+type Specification struct {
+	ServiceName string
+	Consume     string // default consume
+	Produce     string // default produce
+}
+
 // Wrap 把结构体包装为Service
 func Wrap(s interface{}, opts ...Option) *Service {
 	v := reflect.Indirect(reflect.ValueOf(s))

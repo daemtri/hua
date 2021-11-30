@@ -28,7 +28,7 @@ service := &api.CalcService{}
 service.Add = func(arg *api.AddArg) (*api.AddReply,error) {
 	panic("not implemented")
 }
-http.ListenAndServe("127.0.0.1", hua.Wrap(service))
+http.ListenAndServe("127.0.0.1", huarpc.Wrap(service))
 ```
 
 #### Client
@@ -58,7 +58,7 @@ import (
 
 service := &api.CalcService{}
 huamock.Stub(service)
-http.ListenAndServe("127.0.0.1",hua.Wrap(service))
+http.ListenAndServe("127.0.0.1",huarpc.Wrap(service))
 ```
 #### Mock Client
 ```go
