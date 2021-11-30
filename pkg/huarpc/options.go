@@ -1,23 +1,28 @@
 package huarpc
 
-import (
-	"net/http"
-)
+import "github.com/go-playground/validator/v10"
 
-func WithMiddleware(f func(http.Handler) http.Handler) Option {
+func WithRouter(r Router) Option {
 	return optionFunc(func(o *options) {
-		o.httpMiddlewares = append(o.httpMiddlewares, f)
+		o.router = r
+	})
+}
+
+func WithValidator(v Validator) Option {
+	return optionFunc(func(o *options) {
+		o.validator = v
 	})
 }
 
 type options struct {
-	validator       Validator
-	httpMiddlewares []func(handler http.Handler) http.Handler
+	validator Validator
+	router    Router
 }
 
 func newOptions() *options {
 	return &options{
-		validator: nil,
+		validator: &validate{validator.New()},
+		router:    NewServeMux(),
 	}
 }
 

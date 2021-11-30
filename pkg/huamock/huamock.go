@@ -1,6 +1,7 @@
 package huamock
 
 import (
+	"fmt"
 	"reflect"
 	"time"
 
@@ -8,7 +9,10 @@ import (
 )
 
 // Stub 伪造未实现的方法用于测试
-func Stub(s interface{}) interface{} {
+func Stub(s interface{}) error {
+	if reflect.TypeOf(s).Kind() != reflect.Ptr {
+		return fmt.Errorf("need s kind of ptr, got: %T", s)
+	}
 	v := reflect.Indirect(reflect.ValueOf(s))
 	t := v.Type()
 
@@ -31,7 +35,7 @@ func Stub(s interface{}) interface{} {
 		v.Field(i).Set(fn)
 	}
 
-	return s
+	return nil
 }
 
 type fakerHandler struct {

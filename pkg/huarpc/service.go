@@ -8,6 +8,7 @@ import (
 	"net/http"
 	"reflect"
 	"strings"
+	"sync"
 )
 
 var (
@@ -24,12 +25,13 @@ type MethodTags struct {
 }
 
 type ServiceMethod struct {
-	Belong *Service
-
 	Name     string
 	ArgType  reflect.Type
 	Callable reflect.Value
 	Tags     MethodTags
+
+	Validaror Validator
+	URLParams func(r *http.Request, key string) string
 }
 
 func parseServiceMethod(field reflect.StructField, value reflect.Value) (*ServiceMethod, error) {
@@ -75,8 +77,8 @@ func parseServiceMethod(field reflect.StructField, value reflect.Value) (*Servic
 
 func (s *ServiceMethod) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	arg := reflect.New(s.ArgType)
-	contentType := r.Header.Get("Content-Type")
 	argInterface := arg.Interface()
+	contentType := r.Header.Get("Content-Type")
 
 	defer func() {
 		_ = r.Body.Close()
@@ -105,15 +107,15 @@ func (s *ServiceMethod) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		if tag := n.Field(i).Tag.Get("path"); tag != "" {
 			key = tag
 		}
-		val := s.Belong.router.URLParams(r, key)
+		val := s.URLParams(r, key)
 		if val != "" {
 			ve.Field(i).Set(reflect.ValueOf(val).Convert(ve.Field(i).Type()))
 		}
 	}
 
 	// validate
-	if s.Belong.validator != nil {
-		if err := s.Belong.validator.ValidateStruct(argInterface); err != nil {
+	if s.Validaror != nil {
+		if err := s.Validaror.ValidateStruct(argInterface); err != nil {
 			http.Error(w, fmt.Sprintf("validate: %s", err), http.StatusBadRequest)
 			return
 		}
@@ -155,47 +157,16 @@ func (s *ServiceMethod) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 }
 
 type Service struct {
+	Router
+
 	Name    string
 	Methods []*ServiceMethod
 
-	router          Router
-	validator       Validator
-	httpMiddlewares []func(handler http.Handler) http.Handler
+	mountOnce sync.Once
 }
 
-// route 注册路由
-func (s *Service) route(r Router) {
-	mux := r
-	if len(s.httpMiddlewares) > 0 {
-		mux = r.With(s.httpMiddlewares...)
-	}
-	s.router = mux
-
-	var restPattern string
-	for i := range s.Methods {
-		m := s.Methods[i]
-		methodName := m.Tags.HTTP.Path
-		if methodName == "" {
-			methodName = "/" + strings.ToLower(m.Name)
-		}
-
-		restPattern = "/" + strings.ToLower(s.Name) + methodName
-		if m.Tags.HTTP.Method == "" {
-			mux.Handle(restPattern, m)
-		} else {
-			mux.Method(m.Tags.HTTP.Method, restPattern, m)
-		}
-	}
-}
-
-func (s *Service) Endpoint() http.Handler {
-	mux := NewServeMux()
-	s.route(mux)
-	return mux
-}
-
-// NewService 创建服务
-func NewService(s interface{}, opts ...Option) *Service {
+// Wrap 把结构体包装为Service
+func Wrap(s interface{}, opts ...Option) *Service {
 	v := reflect.Indirect(reflect.ValueOf(s))
 	t := v.Type()
 
@@ -206,21 +177,40 @@ func NewService(s interface{}, opts ...Option) *Service {
 	srv := &Service{
 		Name: strings.TrimSuffix(t.Name(), "Service"),
 	}
-	o := newOptions()
+	opt := newOptions()
 	for i := range opts {
-		opts[i].apply(o)
+		opts[i].apply(opt)
 	}
-	srv.validator = o.validator
-	srv.httpMiddlewares = o.httpMiddlewares
+	srv.Router = opt.router
 
 	for i := 0; i < t.NumField(); i++ {
 		sm, err := parseServiceMethod(t.Field(i), v.Field(i))
 		if err != nil {
 			panic(fmt.Errorf("解析方法出错: %w", err))
 		}
-		sm.Belong = srv
+		sm.URLParams = srv.Router.URLParams
+		sm.Validaror = opt.validator
 		srv.Methods = append(srv.Methods, sm)
+
 	}
 
+	srv.Mount()
+
 	return srv
+}
+
+// Mount 把所有路由挂在到r上
+func (s *Service) Mount() {
+	s.mountOnce.Do(func() {
+		var restPattern string
+		for i := range s.Methods {
+			m := s.Methods[i]
+			methodName := m.Tags.HTTP.Path
+			if methodName == "" {
+				methodName = "/" + strings.ToLower(m.Name)
+			}
+			restPattern = "/" + strings.ToLower(s.Name) + methodName
+			s.Router.Method(m.Tags.HTTP.Method, restPattern, m)
+		}
+	})
 }
