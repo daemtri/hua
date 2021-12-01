@@ -176,13 +176,21 @@ type Specification struct {
 	Produce     string // default produce
 }
 
+func MustWrap(s interface{}, opts ...Option) *Service {
+	srv, err := Wrap(s, opts...)
+	if err != nil {
+		panic(err)
+	}
+	return srv
+}
+
 // Wrap 把结构体包装为Service
-func Wrap(s interface{}, opts ...Option) *Service {
+func Wrap(s interface{}, opts ...Option) (*Service, error) {
 	v := reflect.Indirect(reflect.ValueOf(s))
 	t := v.Type()
 
 	if !strings.HasSuffix(t.Name(), "Service") {
-		panic(errors.New("service name必须包含Service后缀"))
+		return nil, errors.New("service name必须包含Service后缀")
 	}
 
 	srv := &Service{
@@ -193,11 +201,16 @@ func Wrap(s interface{}, opts ...Option) *Service {
 		opts[i].apply(opt)
 	}
 	srv.Router = opt.router
+	if opt.instance != nil {
+		if err := inject(s, opt.instance); err != nil {
+			return nil, err
+		}
+	}
 
 	for i := 0; i < t.NumField(); i++ {
 		sm, err := parseServiceMethod(t.Field(i), v.Field(i))
 		if err != nil {
-			panic(fmt.Errorf("解析方法出错: %w", err))
+			return nil, fmt.Errorf("解析方法出错: %w", err)
 		}
 		sm.URLParams = srv.Router.URLParams
 		sm.Validaror = opt.validator
@@ -207,7 +220,7 @@ func Wrap(s interface{}, opts ...Option) *Service {
 
 	srv.Mount()
 
-	return srv
+	return srv, nil
 }
 
 // Mount 把所有路由挂在到r上

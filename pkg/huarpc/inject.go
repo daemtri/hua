@@ -5,8 +5,8 @@ import (
 	"reflect"
 )
 
-// Inject 把h结构体的方法注入到s结构体的属性之中
-func Inject(dst interface{}, src interface{}) error {
+// inject 把h结构体的方法注入到s结构体的属性之中
+func inject(dst interface{}, src interface{}) error {
 	dstVal := reflect.ValueOf(dst)
 	if dstVal.Kind() != reflect.Ptr {
 		return fmt.Errorf("need dst kind of ptr, got: %T", dst)

@@ -14,9 +14,16 @@ func WithValidator(v Validator) Option {
 	})
 }
 
+func WithInstance(x interface{}) Option {
+	return optionFunc(func(opt *options) {
+		opt.instance = x
+	})
+}
+
 type options struct {
 	validator Validator
 	router    Router
+	instance  interface{}
 }
 
 func newOptions() *options {
